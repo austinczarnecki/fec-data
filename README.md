@@ -18,6 +18,7 @@ If you have an R environment either on the command line or using rStudio, you ca
 
 ### Visualization code that uses one of these JSON files
 [https://bl.ocks.org/austinczarnecki/f8c71dd06c67ecbce840](https://bl.ocks.org/austinczarnecki/f8c71dd06c67ecbce840)
+
 [https://bl.ocks.org/austinczarnecki/cc6371af0b726e61b9ab](https://bl.ocks.org/austinczarnecki/cc6371af0b726e61b9ab)
 
 ### References
