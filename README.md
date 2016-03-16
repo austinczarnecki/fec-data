@@ -16,5 +16,8 @@ By swapping in election data from previous years you could use the same script t
 ### How to use
 If you have an R environment either on the command line or using rStudio, you can simply download and run this script to generate the same files that I'm using to visualize FEC data in my blog post at [austinczarnecki.com](austinczarnecki.com).
 
+### Visualization code that uses one of these JSON files
+[https://bl.ocks.org/austinczarnecki/f8c71dd06c67ecbce840](https://bl.ocks.org/austinczarnecki/f8c71dd06c67ecbce840)
+
 ### References
 Open data from the United States Federal Election Commission: [http://www.fec.gov/data/DataCatalog.do](http://www.fec.gov/data/DataCatalog.do)
