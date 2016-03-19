@@ -22,7 +22,7 @@ verbose <- FALSE; # set to TRUE for verbose logging
 #
 # direct download link: 
 #   http://www.fec.gov/data/IndependentExpenditure.do?format=csv
-x <- read.csv("http://www.fec.gov/data/IndependentExpenditure.do?format=csv", as.is=TRUE);
+x <- read.csv("independent-expenditure.csv", as.is=TRUE);
 
 # Data file:    "Candidate Summary" from the FEC data catalog
 # Description:  Summary of candidate revenues and expenses for the current election
@@ -61,6 +61,8 @@ for (col in numeric_summary_cols) {
 # we only care about presidential primary candidates (Dropouts from this list will continue to be included)
 candidates <- c("Clinton, Hillary", "Sanders, Bernie", "Cruz, Ted",
                 "Trump, Donald", "Rubio, Marco", "Kasich, John", "Bush, Jeb");
+candidatesDisplay <- c("Hillary Clinton", "Bernie Sanders", "Ted Cruz", "Donald Trump", "Marco Rubio",
+                       "John Kasich", "Jeb Bush")
 candidateParties <- c(rep("dem", 2), rep("rep", 5))
 candidatesUpper <- toupper(candidates); #unify on upper case here to simplify data cleanup
 candidateIds <- c("P00003392", "P60007168", "P60006111", "P80001571", "P60006723", "P60003670", "P60008059");
@@ -213,26 +215,85 @@ print(candidate_summaries[,c("can_id", "can_nam")])
 
 # initialize variable specifying which columns represent sums of other columns
 total_summary_cols <- c("tot_con", "tot_loa", "tot_rec", "tot_loa_rep", "tot_con_ref", "tot_dis", 
-                        "cas_on_han_beg_of_per", "cas_on_han_clo_of_per", 
-                        "net_con", "net_ope_exp", "deb_owe_by_com", "deb_owe_to_com")
+                        "net_con", "net_ope_exp", "ind_con", "deb_owe_to_com", "deb_owe_by_com")
+
+summary_revenue_cols <- c("ind_ite_con", "ind_uni_con", "ind_con", "par_com_con", "oth_com_con", 
+                          "can_con", "tot_con", "tra_fro_oth_aut_com", "can_loa", "oth_loa", 
+                          "tot_loa", "off_to_ope_exp", "off_to_fun", "off_to_leg_acc", "oth_rec", 
+                          "tot_rec", "cas_on_han_beg_of_per", "deb_owe_to_com")
+
+summary_rev_cols_disp <- c("Contributions over $200",
+                           "Contributions under $200",
+                           "Independent contributions",
+                           "Party PAC contribution",
+                           "Other PAC contribution",
+                           "Candidate contribution",
+                           "Total contributions",
+                           "Other PAC contribution",
+                           "Candidate loans",
+                           "Other loans",
+                           "Total loans",
+                           "Offset to operating cost",
+                           "Offset to fundraising cost",
+                           "Offset to legal and accounting cost",
+                           "Other revenues",
+                           "Total revenues",
+                           "Starting cash on hand",
+                           "Debt owed to candidate committee")
+
+summary_expenditure_cols <- c("ope_exp", "exe_leg_acc_dis", "fun_dis", "tra_to_oth_aut_com", 
+                              "can_loa_rep", "oth_loa_rep", "tot_loa_rep", "ind_ref", "par_com_ref", 
+                              "oth_com_ref", "tot_con_ref", "oth_dis", "tot_dis", "cas_on_han_clo_of_per", 
+                              "deb_owe_by_com")
+
+summary_exp_cols_disp <- c("Operating expenses",
+                           "Exempt legal and accounting",
+                           "Fundraising expenses",
+                           "Transfer to other PACs",
+                           "Candidate loan repayments",
+                           "Other loan repayments",
+                           "Total loan repayments",
+                           "Individual refunds",
+                           "Party PAC refunds",
+                           "Other PAC refunds",
+                           "Total PAC refunds",
+                           "Other expenses",
+                           "Total expenses",
+                           "Cash on hand",
+                           "Debt owed by candidate committee")
 
 # check that non-total columns add to over-all totals
-candidate_summaries$
 
 
 # extract data and construct csv for generating sankey diagram
-# CSV must have lines of the form source, value, target, shortname
+# CSV must have lines of the form source, target, value, shortname
 # where: SOURCE is a source of income or the candidate doing the spending
-#        VALUE  is the amount being earned or spent
 #        TARGET is the candidate for income, or the category of expense for spending
+#        VALUE  is the amount being earned or spent
 #        SHORTNAME  is a short version of the node name for the candidate involved in the transaction
 
 # initialize file with header row
-file <- file("")
+file <- file("sankeydata.csv", "w")
+write("source,target,value,shortname", file=file)
 # iterate through candidates in candidate_summaries
-# for each candidate iterate through all numeric values (eliminating columns that are totals)
-# for columns that are revenues, create link entries
-# for columns that are spending, create link entries
+for (i in 1:length(candidates)) {
+  candidate_data <- subset(candidate_summaries, can_nam==candidatesUpper[i])
+  # for columns that are revenues, create link entries
+  for (val in setdiff(summary_revenue_cols, total_summary_cols)) {
+    if (!is.na(candidate_data[,val])) {
+      index <- match(val, summary_revenue_cols)
+      write(paste0("\"", summary_rev_cols_disp[index], "\",\"",candidatesDisplay[i], "\",", candidate_data[,val]), file=file)
+    }
+  }
+  # for columns that are spending, create link entries
+  for (val in setdiff(summary_expenditure_cols, total_summary_cols)) {
+    if (!is.na(candidate_data[,val])) {
+      index <- match(val, summary_expenditure_cols)
+      write(paste0("\"",candidatesDisplay[i], "\",\"", summary_exp_cols_disp[index], "\",",candidate_data[,val]), file=file)
+    }
+  }
+}
+close(file)
 
 # calculate total spending on themselves for each candidate 
 # selected from z and put into candidate summaries
