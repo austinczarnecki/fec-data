@@ -22,6 +22,9 @@ verbose <- FALSE; # set to TRUE for verbose logging
 #
 # direct download link: 
 #   http://www.fec.gov/data/IndependentExpenditure.do?format=csv
+#
+# WARNING: Download directly in the read.csv call fails, but downloading and saving to the 
+#          working directory works fine.
 x <- read.csv("independent-expenditure.csv", as.is=TRUE);
 
 # Data file:    "Candidate Summary" from the FEC data catalog
@@ -33,7 +36,7 @@ x <- read.csv("independent-expenditure.csv", as.is=TRUE);
 #
 # direct download link: 
 #   http://www.fec.gov/data/CandidateSummary.do?format=csv
-
+#
 # WARNING: At the time of writing (3-14-2016) using the direct download link in this code fails, but 
 #          downloading, opening the csv with Excel, resaving, and referencing the local file in this
 #          code works. FEC get your act together please this shouldn't be necessary.
