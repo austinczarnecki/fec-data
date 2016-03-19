@@ -1,5 +1,5 @@
 # Analysis of election spending FEC data 2016
-# Author:   Austin Czarnecki (c) 2016
+# Author:   Austin Czarnecki
 # Contact:  austin.czarnecki@gmail.com
 # Description: This script extracts data from the FEC data catalog to generate the diagrams for
 #              the article on austinczarnecki.com "Election Funding 2016"
@@ -8,6 +8,8 @@ library("stringr")
 library("R.utils")
 library("rjson")
 options(scipen=20)
+
+# setwd() NOTE: use this to set your working directory to the directory of the script if needed
 
 verbose <- FALSE; # set to TRUE for verbose logging
 
@@ -32,14 +34,29 @@ x <- read.csv("http://www.fec.gov/data/IndependentExpenditure.do?format=csv", as
 # direct download link: 
 #   http://www.fec.gov/data/CandidateSummary.do?format=csv
 
-# WARNING: At the time of writing (3-16-2016) using the direct download link in this code fails, but 
+# WARNING: At the time of writing (3-14-2016) using the direct download link in this code fails, but 
 #          downloading, opening the csv with Excel, resaving, and referencing the local file in this
 #          code works. FEC get your act together please this shouldn't be necessary.
 z <- read.csv("CandidateSummaryAction.csv", as.is=TRUE);
 
-# clean candidate summary data
-z$tot_dis <- as.numeric(gsub(',', '',gsub('\\$','',z$tot_dis))) # all dollar amounts to numeric
-z$tot_dis <- round(z$tot_dis) # round to nearest dollar
+# columns from candidate summary data that contain dollar amounts
+numeric_summary_cols <- c("ind_ite_con", "ind_uni_con", "ind_con", "par_com_con", "oth_com_con", 
+                          "can_con", "tot_con", "tra_fro_oth_aut_com", "can_loa", "oth_loa", "tot_loa", 
+                          "off_to_ope_exp", "off_to_fun", "off_to_leg_acc", "oth_rec", "tot_rec", 
+                          "ope_exp", "exe_leg_acc_dis", "fun_dis", "tra_to_oth_aut_com", "can_loa_rep", 
+                          "oth_loa_rep", "tot_loa_rep", "ind_ref", "par_com_ref", "oth_com_ref", 
+                          "tot_con_ref", "oth_dis", "tot_dis", "cas_on_han_beg_of_per", 
+                          "cas_on_han_clo_of_per", "net_con", "net_ope_exp", "deb_owe_by_com", 
+                          "deb_owe_to_com")
+
+# convert candidate summary numeric columns to dollar amounts
+for (col in numeric_summary_cols) {
+  writeLines("Converting numeric columns in candidate summary data.")
+  if (verbose) {
+    writeLines(paste("Converting column ", col, " to numeric..."))
+  }
+  z[,c(col)] <- round(as.numeric(gsub(',', '',gsub('\\$','',z[,c(col)]))))
+}
 
 # we only care about presidential primary candidates (Dropouts from this list will continue to be included)
 candidates <- c("Clinton, Hillary", "Sanders, Bernie", "Cruz, Ted",
@@ -76,7 +93,7 @@ unifyCanNames <- function(candidates, ids, x) {
 validateNames <- function(candidates, ids) {
   for (i in 1:length(candidates)) {
     result <- length(subset(x, can_nam == candidates[i], select=can_nam)) == 
-              length(subset(x, can_id == ids[i], select=can_nam));
+      length(subset(x, can_id == ids[i], select=can_nam));
     writeLines(paste("Validating candidate: ", candidates[i], "...\n", result));
     if (!result) {
       writeLines("Error: A candidate last name may be misspelled or there may be a mismatch between 
@@ -191,9 +208,34 @@ writeLines("Found the following candidates in the Candidate Summary file:")
 print(candidate_summaries[,c("can_id", "can_nam")])
 candidate_summaries <- unifyCanNames(candidatesUpper, candidateIds, candidate_summaries);
 validateNames(candidatesUpper, candidateIds);
-writeLines("Found the following candidates in the Candidate Summary file:")
+writeLines("Cleaned candidate entries in the Candidate Summary file:")
 print(candidate_summaries[,c("can_id", "can_nam")])
 
+# initialize variable specifying which columns represent sums of other columns
+total_summary_cols <- c("tot_con", "tot_loa", "tot_rec", "tot_loa_rep", "tot_con_ref", "tot_dis", 
+                        "cas_on_han_beg_of_per", "cas_on_han_clo_of_per", 
+                        "net_con", "net_ope_exp", "deb_owe_by_com", "deb_owe_to_com")
+
+# check that non-total columns add to over-all totals
+candidate_summaries$
+
+
+# extract data and construct csv for generating sankey diagram
+# CSV must have lines of the form source, value, target, shortname
+# where: SOURCE is a source of income or the candidate doing the spending
+#        VALUE  is the amount being earned or spent
+#        TARGET is the candidate for income, or the category of expense for spending
+#        SHORTNAME  is a short version of the node name for the candidate involved in the transaction
+
+# initialize file with header row
+file <- file("")
+# iterate through candidates in candidate_summaries
+# for each candidate iterate through all numeric values (eliminating columns that are totals)
+# for columns that are revenues, create link entries
+# for columns that are spending, create link entries
+
+# calculate total spending on themselves for each candidate 
+# selected from z and put into candidate summaries
 self_spend_candidates_ordered <- NULL;
 for (i in 1:length(candidates)) {
   self_spend_candidates_ordered[i] <- subset(candidate_summaries, 
@@ -225,7 +267,7 @@ for (i in c(1, 3:11, 13)) {
                              "oppose"=-total_by_category_against[i])
 }
 json <- toJSON(l)
-write(json, file="~/code/blog_research/totals_by_category_no_tv.json")
+write(json, file="totals_by_category_no_tv.json")
 
 # everything in one category vs. the two tv advertising-related categories
 l <- list()
@@ -234,7 +276,7 @@ l[["everything else"]] <- list("support"=sum(total_by_category_support[c(1, 3:11
 l[["tv advertising"]] <- list("support"=sum(total_by_category_support[c(2, 12)]),
                               "oppose"=-sum(total_by_category_against[c(2, 12)]))
 json <- toJSON(l)
-write(json, file="~/code/blog_research/totals_tv_vs_all.json")
+write(json, file="totals_tv_vs_all.json")
 
 # total spend for candidates
 total_spend_for_candidate <- c(1:length(candidates));
@@ -267,18 +309,18 @@ barplot(c(avg_opp, avg_for))
 # create data frame of totals for and against by candidate (plus average)
 # and write to JSON file, also includes total spending of candidate official committees 
 # for reference
-summary_df <- data.frame(candidate=c(candidates, "Average"),
-                         name=c(candidates, "Average"),
-                         support=c(total_spend_for_candidate, avg_for), 
-                         oppose=c(-total_spend_against_candidate, -avg_opp),
-                         party=c(candidateParties, "none"),
-                         selfspend=c(self_spend_candidates_ordered, self_spend_avg))
+summary_df <- data.frame(candidate=c("Average",candidates),
+                         name=c("Average", candidates),
+                         support=c(avg_for, total_spend_for_candidate), 
+                         oppose=c(-avg_opp, -total_spend_against_candidate),
+                         party=c("none", candidateParties),
+                         selfspend=c(self_spend_avg, self_spend_candidates_ordered))
 list <- list()
 for (i in 1:length(summary_df$candidate)) {
   list[[as.vector(summary_df$candidate)[i]]] <- summary_df[i,2:dim(summary_df)[2]];
 }
 json <- toJSON(list)
-write(json, file="~/code/blog_research/totals_for_and_against_by_candidate.json")
+write(json, file="totals_for_and_against_by_candidate.json")
 
 # plot total spend for, against, and total
 if (verbose) {
@@ -302,7 +344,7 @@ for (i in 1:length(candidates)) {
   tot_sup_by_cat_by_can_list[[candidates[i]]] <- tot_sup_by_cat_by_can[i, 2:14];
 }
 json <- toJSON(tot_sup_by_cat_by_can_list)
-write(json, file="~/code/blog_research/total_spend_support_candidate_by_category.json")
+write(json, file="total_spend_support_candidate_by_category.json")
 
 tot_opp_by_cat_by_can <- data.frame(matrix(ncol = length(categories)+1, nrow = 0));
 colnames(tot_opp_by_cat_by_can) <- c("candidate_name", categories)
@@ -316,7 +358,7 @@ for (i in 1:length(candidates)) {
   tot_opp_by_cat_by_can_list[[candidates[i]]] <- tot_opp_by_cat_by_can[i, 2:14];
 }
 json <- toJSON(tot_opp_by_cat_by_can_list)
-write(json, file="~/code/blog_research/total_spend_against_candidate_by_category.json")
+write(json, file="total_spend_against_candidate_by_category.json")
 
 
 # Future work:
