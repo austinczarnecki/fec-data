@@ -75,6 +75,12 @@ x$pur <- tolower(x$pur); # all "purpose" strings to lower case
 x$exp_amo <- as.numeric(gsub(',', '',gsub('\\$','',x$exp_amo))) # all dollar amounts to numeric
 x$exp_amo <- round(x$exp_amo) # round to nearest dollar
 x$exp_amo <- abs(x$exp_amo) # exp_amo should be positive, a few entries have neg numbers (likely typos)
+temp <- dim(x)[1]
+x <- subset(x, !is.na(exp_amo)) # remove negative values of exp_amo (probably should count these as 
+                                # negative but they are technically spending, just ultimately on nothing 
+                                # since they're reimbursed)
+
+if (verbose) { temp <- writeLines(paste("Removed", temp - dim(x)[1], "records due to negative expense amounts.")); }
 
 # takes a list of candidates and ids and returns a cleaned version of x with unified candidate
 # names and an ID assigned to every row. For example, "Donald Trump", "Trump, Donald", "Trump, Donald J."
@@ -265,8 +271,7 @@ summary_exp_cols_disp <- c("Operating expenses",
                            "Cash on hand",
                            "Debt owed by candidate committee")
 
-# check that non-total columns add to over-all totals
-
+# TODO check that non-total columns add to over-all totals (will also be obvious in diagram if wrong)
 
 # extract data and construct csv for generating sankey diagram
 # CSV must have lines of the form source, target, value, shortname
