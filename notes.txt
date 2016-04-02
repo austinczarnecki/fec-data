@@ -1,0 +1,9 @@
+REVENUES
+"ind_ite_con", "ind_uni_con", "ind_con", "par_com_con", "oth_com_con", "can_con", "tot_con", "tra_fro_oth_aut_com", "can_loa", "oth_loa", "tot_loa", "off_to_ope_exp", "off_to_fun", "off_to_leg_acc", "oth_rec", "tot_rec", "cas_on_han_beg_of_per", "deb_owe_to_com"
+
+EXPENSES
+"ope_exp", "exe_leg_acc_dis", "fun_dis", "tra_to_oth_aut_com", "can_loa_rep", "oth_loa_rep", "tot_loa_rep", "ind_ref", "par_com_ref", "oth_com_ref", "tot_con_ref", "oth_dis", "tot_dis", "cas_on_han_clo_of_per", "deb_owe_by_com"
+
+OTHER (IRRELEVANT)
+net_con
+net_ope_exp
